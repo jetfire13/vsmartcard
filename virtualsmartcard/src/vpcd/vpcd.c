@@ -42,6 +42,7 @@ typedef WORD uint16_t;
 #include <poll.h>
 #include <stdint.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <sys/time.h>
 #include <unistd.h>
 #define INVALID_SOCKET -1
@@ -105,6 +106,14 @@ static SOCKET opensock(unsigned short port)
 
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *) &yes, sizeof yes) != 0) 
         goto err;
+
+#ifdef _WIN32
+    if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&yes, sizeof(yes)) != 0)
+        goto err;
+#else
+    if (setsockopt(sock, SOL_TCP, TCP_NODELAY, (const char*)&yes, sizeof(yes)) != 0)
+        goto err;
+#endif
 
 #if HAVE_DECL_SO_NOSIGPIPE
     if (setsockopt(sock, SOL_SOCKET, SO_NOSIGPIPE, (void *) &yes, sizeof yes) != 0)
